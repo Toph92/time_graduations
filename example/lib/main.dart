@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import 'package:time_graduation/time_graduation.dart';
+import 'package:time_graduations/time_graduation.dart';
 
 void main() {
   runApp(const MyApp());
