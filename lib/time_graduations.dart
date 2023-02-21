@@ -10,21 +10,26 @@ class Graduations extends StatelessWidget {
       required this.from,
       required this.to,
       this.currentTime,
-      bool displayTime = false});
+      bool displayTime = false,
+      this.backgroundColor = Colors.white});
 
   final DateTime from;
   final DateTime to;
   final DateTime? currentTime;
   final int minGraduationWidth = 10;
+  final Color backgroundColor;
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size.infinite,
-      painter: Dessine(
-        from: from,
-        to: to,
-        currentTime: currentTime,
+    return Container(
+      color: backgroundColor,
+      child: CustomPaint(
+        size: Size.infinite,
+        painter: DrawPainter(
+            from: from,
+            to: to,
+            currentTime: currentTime,
+            backgroundColor: backgroundColor),
       ),
     );
   }
@@ -32,14 +37,19 @@ class Graduations extends StatelessWidget {
 
 enum TwoPass { drawLines, drawTexts }
 
-class Dessine extends CustomPainter {
-  Dessine({required this.from, required this.to, this.currentTime});
+class DrawPainter extends CustomPainter {
+  DrawPainter(
+      {required this.from,
+      required this.to,
+      this.currentTime,
+      required this.backgroundColor});
 
   //double pixWidth;
   DateTime from, to;
   double minWidthText = 20;
   DateTime? currentTime;
   late TwoPass k;
+  Color backgroundColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -217,7 +227,7 @@ class Dessine extends CustomPainter {
         style: GoogleFonts.robotoFlex(
           color: Colors.black,
           fontWeight: FontWeight.bold,
-          backgroundColor: Colors.white,
+          backgroundColor: backgroundColor,
           fontSize: 12,
         ),
         text: timeTxt);
@@ -236,7 +246,7 @@ class Dessine extends CustomPainter {
     TextSpan span = TextSpan(
         style: GoogleFonts.robotoFlex(
             color: Colors.black,
-            backgroundColor: Colors.white,
+            backgroundColor: backgroundColor,
             fontSize: 10,
             letterSpacing: 0.2),
         text: DateFormat('HH:mm').format(date));
@@ -255,7 +265,7 @@ class Dessine extends CustomPainter {
     TextSpan span = TextSpan(
         style: GoogleFonts.robotoFlex(
             color: Colors.black,
-            backgroundColor: Colors.white,
+            backgroundColor: backgroundColor,
             fontWeight: FontWeight.bold,
             fontSize: 10,
             letterSpacing: 0.2),

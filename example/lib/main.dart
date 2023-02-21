@@ -74,37 +74,41 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: Center(
-        child: Column(
-          children: [
-            Expanded(
-              flex: 6,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 25),
-                child: Graduations(
-                  from: from,
-                  to: to,
-                  currentTime:
-                      DateTime.fromMillisecondsSinceEpoch(valSlider.toInt()),
+        child: Container(
+          color: Colors.green,
+          child: Column(
+            children: [
+              Expanded(
+                flex: 6,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 25),
+                  child: Graduations(
+                    backgroundColor: Colors.grey.shade200,
+                    from: from,
+                    to: to,
+                    currentTime:
+                        DateTime.fromMillisecondsSinceEpoch(valSlider.toInt()),
+                  ),
                 ),
               ),
-            ),
-            Expanded(
-                flex: 4,
-                child: Slider(
-                  value: valSlider,
-                  min: from.millisecondsSinceEpoch.toDouble(),
-                  max: to.millisecondsSinceEpoch.toDouble(),
-                  /*divisions:
-                      to.millisecondsSinceEpoch - from.millisecondsSinceEpoch,*/
-                  label: DateFormat('HH:mm').format(
-                      DateTime.fromMillisecondsSinceEpoch(valSlider.toInt())),
-                  onChanged: (value) {
-                    setState(() {
-                      valSlider = value;
-                    });
-                  },
-                ))
-          ],
+              Expanded(
+                  flex: 4,
+                  child: Slider(
+                    value: valSlider,
+                    min: from.millisecondsSinceEpoch.toDouble(),
+                    max: to.millisecondsSinceEpoch.toDouble(),
+                    /*divisions:
+                        to.millisecondsSinceEpoch - from.millisecondsSinceEpoch,*/
+                    label: DateFormat('HH:mm').format(
+                        DateTime.fromMillisecondsSinceEpoch(valSlider.toInt())),
+                    onChanged: (value) {
+                      setState(() {
+                        valSlider = value;
+                      });
+                    },
+                  ))
+            ],
+          ),
         ),
       ),
     );
