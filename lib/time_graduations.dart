@@ -25,7 +25,7 @@ class Graduations extends StatelessWidget {
       color: backgroundColor,
       child: CustomPaint(
         size: Size.infinite,
-        painter: DrawPainter(
+        painter: DrawPainterGraduation(
             from: from,
             to: to,
             currentTime: currentTime,
@@ -37,8 +37,8 @@ class Graduations extends StatelessWidget {
 
 enum TwoPass { drawLines, drawTexts }
 
-class DrawPainter extends CustomPainter {
-  DrawPainter(
+class DrawPainterGraduation extends CustomPainter {
+  DrawPainterGraduation(
       {required this.from,
       required this.to,
       this.currentTime,

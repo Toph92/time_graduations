@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'package:time_graduations/time_graduations.dart';
+import 'package:time_graduations/graph_elevation.dart';
 
 void main() {
   runApp(const MyApp());
@@ -53,7 +54,17 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   _MyHomePageState() {
     valSlider = from.millisecondsSinceEpoch.toDouble();
+    list = [
+      ElevationPoint(altitude: 510, timestamp: from),
+      ElevationPoint(
+          altitude: 800, timestamp: from.add(const Duration(minutes: 60))),
+      ElevationPoint(
+          altitude: 700, timestamp: from.add(const Duration(minutes: 120))),
+      ElevationPoint(altitude: 600, timestamp: to)
+    ];
   }
+
+  List<ElevationPoint>? list;
 
   DateTime from = DateTime(2023, 02, 18, 15, 15);
   DateTime to = DateTime(2023, 02, 18, 18, 15);
@@ -75,15 +86,27 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: Center(
         child: Container(
-          color: Colors.green,
+          color: Colors.white,
           child: Column(
             children: [
               Expanded(
-                flex: 6,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 25),
+                  child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 25),
+                child: GraphElevation(
+                  listTraces: [list!],
+                  from: from,
+                  to: to,
+                  currentTime:
+                      DateTime.fromMillisecondsSinceEpoch(valSlider.toInt()),
+                ),
+              )),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 25),
+                child: Container(
+                  color: Colors.grey,
+                  height: 25,
                   child: Graduations(
-                    backgroundColor: Colors.grey.shade200,
+                    backgroundColor: Colors.grey.shade100,
                     from: from,
                     to: to,
                     currentTime:
@@ -91,22 +114,20 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ),
               ),
-              Expanded(
-                  flex: 4,
-                  child: Slider(
-                    value: valSlider,
-                    min: from.millisecondsSinceEpoch.toDouble(),
-                    max: to.millisecondsSinceEpoch.toDouble(),
-                    /*divisions:
-                        to.millisecondsSinceEpoch - from.millisecondsSinceEpoch,*/
-                    label: DateFormat('HH:mm').format(
-                        DateTime.fromMillisecondsSinceEpoch(valSlider.toInt())),
-                    onChanged: (value) {
-                      setState(() {
-                        valSlider = value;
-                      });
-                    },
-                  ))
+              Slider(
+                value: valSlider,
+                min: from.millisecondsSinceEpoch.toDouble(),
+                max: to.millisecondsSinceEpoch.toDouble(),
+                /*divisions:
+                    to.millisecondsSinceEpoch - from.millisecondsSinceEpoch,*/
+                label: DateFormat('HH:mm').format(
+                    DateTime.fromMillisecondsSinceEpoch(valSlider.toInt())),
+                onChanged: (value) {
+                  setState(() {
+                    valSlider = value;
+                  });
+                },
+              )
             ],
           ),
         ),
