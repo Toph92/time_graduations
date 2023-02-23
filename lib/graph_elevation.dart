@@ -77,6 +77,20 @@ class DrawPainterElevation extends CustomPainter {
 
     double ratioAltitude = (_maxAlt - _minAlt) / size.height;
 
+    for (ElevationPoint e in listTraces[0]) {
+      final paint = Paint()
+        ..color = Colors.red
+        ..strokeWidth = 1;
+      canvas.drawLine(
+          Offset(
+              (from.millisecondsSinceEpoch -
+                      e.timestamp.millisecondsSinceEpoch) /
+                  ratioTimestamp,
+              size.height),
+          Offset(e.timestamp.millisecondsSinceEpoch / ratioTimestamp, 0),
+          paint);
+    }
+
     /*for (DateTime d = from;
         d.millisecondsSinceEpoch < to.millisecondsSinceEpoch;
         d = d.add(const Duration(minutes: 1))) {
