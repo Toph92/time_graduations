@@ -60,7 +60,7 @@ class _MyHomePageState extends State<MyHomePage> {
           altitude: 800, timestamp: from.add(const Duration(minutes: 60))),
       ElevationPoint(
           altitude: 700, timestamp: from.add(const Duration(minutes: 120))),
-      ElevationPoint(altitude: 600, timestamp: to)
+      ElevationPoint(altitude: 510, timestamp: to)
     ];
   }
 
@@ -87,47 +87,58 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Center(
         child: Container(
           color: Colors.white,
-          child: Column(
+          child: Row(
             children: [
+              Container(
+                width: 25,
+                color: Colors.amber,
+              ),
               Expanded(
-                  child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 25),
-                child: GraphElevation(
-                  listTraces: [list!],
-                  from: from,
-                  to: to,
-                  currentTime:
-                      DateTime.fromMillisecondsSinceEpoch(valSlider.toInt()),
-                ),
-              )),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 25),
-                child: Container(
-                  color: Colors.grey,
-                  height: 25,
-                  child: Graduations(
-                    backgroundColor: Colors.grey.shade100,
-                    from: from,
-                    to: to,
-                    currentTime:
-                        DateTime.fromMillisecondsSinceEpoch(valSlider.toInt()),
-                  ),
+                child: Column(
+                  children: [
+                    Expanded(
+                        child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 25),
+                      child: GraphElevation(
+                        listTraces: [list!],
+                        from: from,
+                        to: to,
+                        currentTime: DateTime.fromMillisecondsSinceEpoch(
+                            valSlider.toInt()),
+                      ),
+                    )),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 25),
+                      child: Container(
+                        color: Colors.grey,
+                        height: 25,
+                        child: Graduations(
+                          backgroundColor: Colors.grey.shade100,
+                          from: from,
+                          to: to,
+                          currentTime: DateTime.fromMillisecondsSinceEpoch(
+                              valSlider.toInt()),
+                        ),
+                      ),
+                    ),
+                    Slider(
+                      value: valSlider,
+                      min: from.millisecondsSinceEpoch.toDouble(),
+                      max: to.millisecondsSinceEpoch.toDouble(),
+                      /*divisions:
+                          to.millisecondsSinceEpoch - from.millisecondsSinceEpoch,*/
+                      label: DateFormat('HH:mm').format(
+                          DateTime.fromMillisecondsSinceEpoch(
+                              valSlider.toInt())),
+                      onChanged: (value) {
+                        setState(() {
+                          valSlider = value;
+                        });
+                      },
+                    )
+                  ],
                 ),
               ),
-              Slider(
-                value: valSlider,
-                min: from.millisecondsSinceEpoch.toDouble(),
-                max: to.millisecondsSinceEpoch.toDouble(),
-                /*divisions:
-                    to.millisecondsSinceEpoch - from.millisecondsSinceEpoch,*/
-                label: DateFormat('HH:mm').format(
-                    DateTime.fromMillisecondsSinceEpoch(valSlider.toInt())),
-                onChanged: (value) {
-                  setState(() {
-                    valSlider = value;
-                  });
-                },
-              )
             ],
           ),
         ),

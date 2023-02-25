@@ -77,18 +77,28 @@ class DrawPainterElevation extends CustomPainter {
 
     double ratioAltitude = (_maxAlt - _minAlt) / size.height;
 
-    for (ElevationPoint e in listTraces[0]) {
-      final paint = Paint()
-        ..color = Colors.red
-        ..strokeWidth = 1;
-      canvas.drawLine(
-          Offset(
-              (from.millisecondsSinceEpoch -
-                      e.timestamp.millisecondsSinceEpoch) /
-                  ratioTimestamp,
-              size.height),
-          Offset(e.timestamp.millisecondsSinceEpoch / ratioTimestamp, 0),
-          paint);
+    ElevationPoint? lastPoint;
+    for (ElevationPoint currentPoint in listTraces[0]) {
+      if (lastPoint != null) {
+        final paint = Paint()
+          ..color = Colors.green
+          ..strokeWidth = 1;
+        /* print(
+            "from ${(lastPoint.timestamp.millisecondsSinceEpoch - from.millisecondsSinceEpoch) / ratioTimestamp}"); */
+        canvas.drawLine(
+            Offset(
+                (lastPoint.timestamp.millisecondsSinceEpoch -
+                        from.millisecondsSinceEpoch) /
+                    ratioTimestamp,
+                (_maxAlt - lastPoint.altitude) / ratioAltitude),
+            Offset(
+                (currentPoint.timestamp.millisecondsSinceEpoch -
+                        from.millisecondsSinceEpoch) /
+                    ratioTimestamp,
+                (_maxAlt - currentPoint.altitude) / ratioAltitude),
+            paint);
+      }
+      lastPoint = currentPoint;
     }
 
     /*for (DateTime d = from;
@@ -223,6 +233,8 @@ class DrawPainterElevation extends CustomPainter {
 
     // on affiche le curseur
     if (currentTime != null) {
+      /*print(
+          "width ${(currentTime!.millisecondsSinceEpoch - from.millisecondsSinceEpoch) / ratioTimestamp}");*/ // 0 - 10000
       final p1 = Offset(
           (currentTime!.millisecondsSinceEpoch - from.millisecondsSinceEpoch) /
               ratioTimestamp,
