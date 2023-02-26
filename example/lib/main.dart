@@ -85,62 +85,42 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: Center(
-        child: Container(
-          color: Colors.white,
-          child: Row(
-            children: [
-              Container(
-                width: 25,
-                color: Colors.amber,
+        child: Column(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 25),
+                /* child: Container(
+                  color: Colors.red,
+                ), */
+                child: Graduations(
+                  backgroundColor: Colors.grey.shade100,
+                  from: from,
+                  to: to,
+                  currentTime:
+                      DateTime.fromMillisecondsSinceEpoch(valSlider.toInt()),
+                ), 
               ),
-              Expanded(
-                child: Column(
-                  children: [
-                    Expanded(
-                        child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 25),
-                      child: GraphElevation(
-                        listTraces: [list!],
-                        from: from,
-                        to: to,
-                        currentTime: DateTime.fromMillisecondsSinceEpoch(
-                            valSlider.toInt()),
-                      ),
-                    )),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 25),
-                      child: Container(
-                        color: Colors.grey,
-                        height: 25,
-                        child: Graduations(
-                          backgroundColor: Colors.grey.shade100,
-                          from: from,
-                          to: to,
-                          currentTime: DateTime.fromMillisecondsSinceEpoch(
-                              valSlider.toInt()),
-                        ),
-                      ),
-                    ),
-                    Slider(
-                      value: valSlider,
-                      min: from.millisecondsSinceEpoch.toDouble(),
-                      max: to.millisecondsSinceEpoch.toDouble(),
-                      /*divisions:
-                          to.millisecondsSinceEpoch - from.millisecondsSinceEpoch,*/
-                      label: DateFormat('HH:mm').format(
-                          DateTime.fromMillisecondsSinceEpoch(
-                              valSlider.toInt())),
-                      onChanged: (value) {
-                        setState(() {
-                          valSlider = value;
-                        });
-                      },
-                    )
-                  ],
-                ),
+            ),
+            SizedBox(
+              height: 50,
+              width: double.infinity,
+              child: Slider(
+                value: valSlider,
+                min: from.millisecondsSinceEpoch.toDouble(),
+                max: to.millisecondsSinceEpoch.toDouble(),
+                /*divisions:
+                            to.millisecondsSinceEpoch - from.millisecondsSinceEpoch,*/
+                label: DateFormat('HH:mm').format(
+                    DateTime.fromMillisecondsSinceEpoch(valSlider.toInt())),
+                onChanged: (value) {
+                  setState(() {
+                    valSlider = value;
+                  });
+                },
               ),
-            ],
-          ),
+            )
+          ],
         ),
       ),
     );

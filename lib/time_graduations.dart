@@ -18,10 +18,11 @@ class Graduations extends StatelessWidget {
   final DateTime? currentTime;
   final int minGraduationWidth = 10;
   final Color backgroundColor;
+  final int graduationHeight = 25;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    /* return Container(
       color: backgroundColor,
       child: CustomPaint(
         size: Size.infinite,
@@ -31,6 +32,16 @@ class Graduations extends StatelessWidget {
             currentTime: currentTime,
             backgroundColor: backgroundColor),
       ),
+    ); */
+    return CustomPaint(
+      painter: DrawPainterGraduation(
+          from: from,
+          to: to,
+          currentTime: currentTime,
+          backgroundColor: backgroundColor),
+      child: const SizedBox.expand(
+          //dimension: 200.0,
+          ),
     );
   }
 }
