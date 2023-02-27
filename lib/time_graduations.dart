@@ -13,8 +13,8 @@ class ElevationPoint {
   Color? color;
 }
 
-class Graduations extends StatelessWidget {
-  const Graduations(
+class GraphElevation extends StatelessWidget {
+  const GraphElevation(
       {super.key,
       required this.from,
       required this.to,
@@ -34,16 +34,21 @@ class Graduations extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: DrawPainterGraduation(
-          from: from,
-          to: to,
-          currentTime: currentTime,
-          backgroundColor: backgroundColor,
-          listTraces: listTraces)
-        ..graduationHeight = graduationHeight
-        ..graduationWidth = graduationWidth,
-      child: const SizedBox.expand(),
+    return GestureDetector(
+      onTapDown: (details) {
+        print(details.localPosition);
+      },
+      child: CustomPaint(
+        painter: DrawPainterGraduation(
+            from: from,
+            to: to,
+            currentTime: currentTime,
+            backgroundColor: backgroundColor,
+            listTraces: listTraces)
+          ..graduationHeight = graduationHeight
+          ..graduationWidth = graduationWidth,
+        child: const SizedBox.expand(),
+      ),
     );
   }
 }
@@ -66,8 +71,9 @@ class DrawPainterGraduation extends CustomPainter {
   Color backgroundColor;
   double graduationHeight = 0;
   double graduationWidth = 0;
-  double _minAlt = 100000;
-  double _maxAlt = 0;
+  late double _minAlt;
+  late double _maxAlt;
+  final double _topAltMargin = 100; // 100 m
   List<List<ElevationPoint>> listTraces;
   double? ratioAltitude;
   double? ratioTimestamp;
@@ -75,6 +81,8 @@ class DrawPainterGraduation extends CustomPainter {
   double? yOffset;
 
   void updateMinMaxAltitude() {
+    _minAlt = 100000;
+    _maxAlt = 0;
     for (List<ElevationPoint> t in listTraces) {
       // surement moyen de faire cela avec reduce mais je maitrise moyennement et une passe je fais le min et le max et cela fonctionne pour toute  la liste
       // peut-etre plus rapide en faison 2 passes mais je n'ai pas testé
@@ -86,6 +94,7 @@ class DrawPainterGraduation extends CustomPainter {
         }
       }
     }
+    _maxAlt += _topAltMargin;
   }
 
   @override
@@ -100,9 +109,10 @@ class DrawPainterGraduation extends CustomPainter {
     ratioAltitude = (_maxAlt - _minAlt) / (size.height - yOffset!);
 
 //************************************************************** */
-    // graduation verticales
+    // graduations
     horizontalGraduations(canvas, size);
     verticalGraduations(canvas, size);
+    drawGraph(canvas);
 
     // on affiche le curseur
     if (currentTime != null) {
@@ -116,6 +126,34 @@ class DrawPainterGraduation extends CustomPainter {
         ..color = Colors.red
         ..strokeWidth = 1;
       canvas.drawLine(p1, p2, paint);
+    }
+  }
+
+  void drawGraph(Canvas canvas) {
+    ElevationPoint? lastPoint;
+    for (ElevationPoint currentPoint in listTraces[0]) {
+      if (lastPoint != null) {
+        final paint = Paint()
+          ..color = Colors.green
+          ..strokeWidth = 1;
+        /* print(
+            "from ${(lastPoint.timestamp.millisecondsSinceEpoch - from.millisecondsSinceEpoch) / ratioTimestamp}"); */
+        canvas.drawLine(
+            Offset(
+                (lastPoint.timestamp.millisecondsSinceEpoch -
+                            from.millisecondsSinceEpoch) /
+                        ratioTimestamp! +
+                    xOffset!,
+                (_maxAlt - lastPoint.altitude) / ratioAltitude!),
+            Offset(
+                (currentPoint.timestamp.millisecondsSinceEpoch -
+                            from.millisecondsSinceEpoch) /
+                        ratioTimestamp! +
+                    xOffset!,
+                (_maxAlt - currentPoint.altitude) / ratioAltitude!),
+            paint);
+      }
+      lastPoint = currentPoint;
     }
   }
 

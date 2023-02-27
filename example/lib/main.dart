@@ -92,7 +92,7 @@ class _MyHomePageState extends State<MyHomePage> {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25),
-                child: Graduations(
+                child: GraphElevation(
                   backgroundColor: Colors.grey.shade100,
                   from: from,
                   to: to,
