@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'package:time_graduations/time_graduations.dart';
-import 'package:time_graduations/graph_elevation.dart';
+//import 'package:time_graduations/graph_elevation.dart';
 
 void main() {
   runApp(const MyApp());
@@ -57,9 +57,11 @@ class _MyHomePageState extends State<MyHomePage> {
     list = [
       ElevationPoint(altitude: 510, timestamp: from),
       ElevationPoint(
-          altitude: 800, timestamp: from.add(const Duration(minutes: 60))),
+          altitude: 1100, timestamp: from.add(const Duration(minutes: 60))),
       ElevationPoint(
-          altitude: 700, timestamp: from.add(const Duration(minutes: 120))),
+          altitude: 2200, timestamp: from.add(const Duration(minutes: 90))),
+      ElevationPoint(
+          altitude: 1500, timestamp: from.add(const Duration(minutes: 150))),
       ElevationPoint(altitude: 510, timestamp: to)
     ];
   }
@@ -90,34 +92,35 @@ class _MyHomePageState extends State<MyHomePage> {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25),
-                /* child: Container(
-                  color: Colors.red,
-                ), */
                 child: Graduations(
                   backgroundColor: Colors.grey.shade100,
                   from: from,
                   to: to,
+                  listTraces: [list!],
                   currentTime:
                       DateTime.fromMillisecondsSinceEpoch(valSlider.toInt()),
-                ), 
+                ),
               ),
             ),
             SizedBox(
               height: 50,
               width: double.infinity,
-              child: Slider(
-                value: valSlider,
-                min: from.millisecondsSinceEpoch.toDouble(),
-                max: to.millisecondsSinceEpoch.toDouble(),
-                /*divisions:
-                            to.millisecondsSinceEpoch - from.millisecondsSinceEpoch,*/
-                label: DateFormat('HH:mm').format(
-                    DateTime.fromMillisecondsSinceEpoch(valSlider.toInt())),
-                onChanged: (value) {
-                  setState(() {
-                    valSlider = value;
-                  });
-                },
+              child: Padding(
+                padding: const EdgeInsets.only(left: 40),
+                child: Slider(
+                  value: valSlider,
+                  min: from.millisecondsSinceEpoch.toDouble(),
+                  max: to.millisecondsSinceEpoch.toDouble(),
+                  /*divisions:
+                              to.millisecondsSinceEpoch - from.millisecondsSinceEpoch,*/
+                  label: DateFormat('HH:mm').format(
+                      DateTime.fromMillisecondsSinceEpoch(valSlider.toInt())),
+                  onChanged: (value) {
+                    setState(() {
+                      valSlider = value;
+                    });
+                  },
+                ),
               ),
             )
           ],

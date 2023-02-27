@@ -1,8 +1,17 @@
+import 'dart:math';
+
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/rendering.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+class ElevationPoint {
+  ElevationPoint({required this.altitude, required this.timestamp, this.color});
+  DateTime timestamp;
+  int altitude;
+  Color? color;
+}
 
 class Graduations extends StatelessWidget {
   const Graduations(
@@ -11,37 +20,30 @@ class Graduations extends StatelessWidget {
       required this.to,
       this.currentTime,
       bool displayTime = false,
-      this.backgroundColor = Colors.white});
+      this.backgroundColor = Colors.white,
+      required this.listTraces});
 
   final DateTime from;
   final DateTime to;
   final DateTime? currentTime;
   final int minGraduationWidth = 10;
   final Color backgroundColor;
-  final int graduationHeight = 25;
+  final double graduationHeight = 25; // graduations horizontales
+  final double graduationWidth = 40; // graduations verticales
+  final List<List<ElevationPoint>> listTraces;
 
   @override
   Widget build(BuildContext context) {
-    /* return Container(
-      color: backgroundColor,
-      child: CustomPaint(
-        size: Size.infinite,
-        painter: DrawPainterGraduation(
-            from: from,
-            to: to,
-            currentTime: currentTime,
-            backgroundColor: backgroundColor),
-      ),
-    ); */
     return CustomPaint(
       painter: DrawPainterGraduation(
           from: from,
           to: to,
           currentTime: currentTime,
-          backgroundColor: backgroundColor),
-      child: const SizedBox.expand(
-          //dimension: 200.0,
-          ),
+          backgroundColor: backgroundColor,
+          listTraces: listTraces)
+        ..graduationHeight = graduationHeight
+        ..graduationWidth = graduationWidth,
+      child: const SizedBox.expand(),
     );
   }
 }
@@ -53,7 +55,8 @@ class DrawPainterGraduation extends CustomPainter {
       {required this.from,
       required this.to,
       this.currentTime,
-      required this.backgroundColor});
+      required this.backgroundColor,
+      required this.listTraces});
 
   //double pixWidth;
   DateTime from, to;
@@ -61,9 +64,62 @@ class DrawPainterGraduation extends CustomPainter {
   DateTime? currentTime;
   late TwoPass k;
   Color backgroundColor;
+  double graduationHeight = 0;
+  double graduationWidth = 0;
+  double _minAlt = 100000;
+  double _maxAlt = 0;
+  List<List<ElevationPoint>> listTraces;
+  double? ratioAltitude;
+  double? ratioTimestamp;
+  double? xOffset;
+  double? yOffset;
+
+  void updateMinMaxAltitude() {
+    for (List<ElevationPoint> t in listTraces) {
+      // surement moyen de faire cela avec reduce mais je maitrise moyennement et une passe je fais le min et le max et cela fonctionne pour toute  la liste
+      // peut-etre plus rapide en faison 2 passes mais je n'ai pas testé
+      for (ElevationPoint p in t) {
+        if (p.altitude < _minAlt) {
+          _minAlt = p.altitude.toDouble();
+        } else if (p.altitude > _maxAlt) {
+          _maxAlt = p.altitude.toDouble();
+        }
+      }
+    }
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
+    xOffset = graduationWidth;
+    yOffset = graduationHeight;
+
+    ratioTimestamp = (to.millisecondsSinceEpoch - from.millisecondsSinceEpoch) /
+        (size.width - xOffset!);
+
+    updateMinMaxAltitude();
+    ratioAltitude = (_maxAlt - _minAlt) / (size.height - yOffset!);
+
+//************************************************************** */
+    // graduation verticales
+    horizontalGraduations(canvas, size);
+    verticalGraduations(canvas, size);
+
+    // on affiche le curseur
+    if (currentTime != null) {
+      final p1 = Offset(
+          ((currentTime!.millisecondsSinceEpoch - from.millisecondsSinceEpoch) /
+                  ratioTimestamp!) +
+              xOffset!,
+          size.height);
+      final p2 = Offset(p1.dx, 0);
+      final paint = Paint()
+        ..color = Colors.red
+        ..strokeWidth = 1;
+      canvas.drawLine(p1, p2, paint);
+    }
+  }
+
+  void horizontalGraduations(Canvas canvas, Size size) {
     const ratioHour = 25000;
     const ratio30min = 25000;
     const ratio15min = 20000;
@@ -71,22 +127,28 @@ class DrawPainterGraduation extends CustomPainter {
     const ratio1min = 20000;
     const ratioTxt5min = 8000;
 
-    double ratioTimestamp =
-        (to.millisecondsSinceEpoch - from.millisecondsSinceEpoch) / size.width;
+    // bgColor pour les graduations horizontales
+    drawRect(
+        canvas: canvas,
+        offsetFrom: Offset(graduationWidth, size.height),
+        offsetTo: Offset(size.width, size.height - graduationHeight),
+        fillColor: backgroundColor);
 
-    //print("${ratioTimestamp}");
+// bgColor pour les graduations verticales
+
+    // graduations horizontales
     for (k in TwoPass.values) {
       for (DateTime d = from;
           d.millisecondsSinceEpoch < to.millisecondsSinceEpoch;
           d = d.add(const Duration(minutes: 1))) {
         double width =
             (d.millisecondsSinceEpoch - from.millisecondsSinceEpoch) /
-                ratioTimestamp;
+                ratioTimestamp!;
 
         if (d.minute == 0) {
           // il est l'or
-          final p1 = Offset(width, size.height);
-          final p2 = Offset(p1.dx, size.height - 25);
+          final p1 = Offset(width + xOffset!, size.height);
+          final p2 = Offset(p1.dx, size.height - graduationHeight);
           if (k == TwoPass.drawLines) {
             final paint = Paint()
               ..color = Colors.black
@@ -94,7 +156,7 @@ class DrawPainterGraduation extends CustomPainter {
             canvas.drawLine(p1, p2, paint);
           }
 
-          if (ratioTimestamp < ratioHour) {
+          if (ratioTimestamp! < ratioHour) {
             drawHourTxt(
                 canvas: canvas,
                 size: size,
@@ -109,10 +171,10 @@ class DrawPainterGraduation extends CustomPainter {
                 date: d);
           }
         } else if (d.minute == 30) {
-          if (ratioTimestamp < ratio30min) {
-            if (ratioTimestamp < ratioTxt5min) {
-              final p1 = Offset(width, size.height);
-              final p2 = Offset(p1.dx, size.height - 25);
+          if (ratioTimestamp! < ratio30min) {
+            if (ratioTimestamp! < ratioTxt5min) {
+              final p1 = Offset(width + xOffset!, size.height);
+              final p2 = Offset(p1.dx, size.height - graduationHeight);
               if (k == TwoPass.drawLines) {
                 final paint = Paint()
                   ..color = Colors.black
@@ -125,7 +187,7 @@ class DrawPainterGraduation extends CustomPainter {
                   offset: Offset(p1.dx - 13, size.height - 16),
                   date: d);
             } else {
-              final p1 = Offset(width, size.height);
+              final p1 = Offset(width + xOffset!, size.height);
               final p2 = Offset(p1.dx, size.height - 20);
               if (k == TwoPass.drawLines) {
                 final paint = Paint()
@@ -140,7 +202,7 @@ class DrawPainterGraduation extends CustomPainter {
                   date: d);
             }
           } else {
-            final p1 = Offset(width, size.height);
+            final p1 = Offset(width + xOffset!, size.height);
             final p2 = Offset(p1.dx, size.height - 20);
             if (k == TwoPass.drawLines) {
               final paint = Paint()
@@ -150,8 +212,8 @@ class DrawPainterGraduation extends CustomPainter {
             }
           }
         } else if (d.minute == 15 || d.minute == 45) {
-          if (ratioTimestamp < ratio15min) {
-            final p1 = Offset(width, size.height);
+          if (ratioTimestamp! < ratio15min) {
+            final p1 = Offset(width + xOffset!, size.height);
             final p2 = Offset(p1.dx, size.height - 20);
             final paint = Paint()
               ..color = Colors.black
@@ -163,7 +225,7 @@ class DrawPainterGraduation extends CustomPainter {
                 offset: Offset(p1.dx - 13, size.height - 16),
                 date: d);
           } else {
-            final p1 = Offset(width, size.height);
+            final p1 = Offset(width + xOffset!, size.height);
             final p2 = Offset(p1.dx, size.height - 15);
             if (k == TwoPass.drawLines) {
               final paint = Paint()
@@ -172,9 +234,9 @@ class DrawPainterGraduation extends CustomPainter {
               canvas.drawLine(p1, p2, paint);
             }
           }
-        } else if (d.minute % 5 == 0 && ratioTimestamp < ratio5min) {
-          if (ratioTimestamp < ratioTxt5min) {
-            final p1 = Offset(width, size.height);
+        } else if (d.minute % 5 == 0 && ratioTimestamp! < ratio5min) {
+          if (ratioTimestamp! < ratioTxt5min) {
+            final p1 = Offset(width + xOffset!, size.height);
             final p2 = Offset(p1.dx, size.height - 20);
             final paint = Paint()
               ..color = Colors.black
@@ -186,7 +248,7 @@ class DrawPainterGraduation extends CustomPainter {
                 offset: Offset(p1.dx - 13, size.height - 16),
                 date: d);
           } else {
-            final p1 = Offset(width, size.height);
+            final p1 = Offset(width + xOffset!, size.height);
             final p2 = Offset(p1.dx, size.height - 10);
             if (k == TwoPass.drawLines) {
               final paint = Paint()
@@ -195,8 +257,8 @@ class DrawPainterGraduation extends CustomPainter {
               canvas.drawLine(p1, p2, paint);
             }
           }
-        } else if (ratioTimestamp < ratio1min) {
-          final p1 = Offset(width, size.height);
+        } else if (ratioTimestamp! < ratio1min) {
+          final p1 = Offset(width + xOffset!, size.height);
           final p2 = Offset(p1.dx, size.height - 5);
           if (k == TwoPass.drawLines) {
             final paint = Paint()
@@ -207,19 +269,177 @@ class DrawPainterGraduation extends CustomPainter {
         }
       }
     }
+    drawHorizonLegend(
+        canvas: canvas,
+        offset:
+            Offset(graduationWidth + 30, size.height - graduationHeight - 5));
+  }
 
-    // on affiche le curseur
-    if (currentTime != null) {
-      final p1 = Offset(
-          (currentTime!.millisecondsSinceEpoch - from.millisecondsSinceEpoch) /
-              ratioTimestamp,
-          size.height);
-      final p2 = Offset(p1.dx, 0);
-      final paint = Paint()
-        ..color = Colors.red
-        ..strokeWidth = 1;
-      canvas.drawLine(p1, p2, paint);
+  void verticalGraduations(Canvas canvas, Size size) {
+    drawRect(
+        canvas: canvas,
+        offsetFrom: const Offset(0, 0),
+        offsetTo: Offset(graduationWidth, size.height - graduationHeight),
+        //filColor: Colors.blue
+        fillColor: backgroundColor);
+
+    //print("ratio=$ratioAltitude");
+
+    for (k in TwoPass.values) {
+      //min
+      /*  Offset p1 = Offset(0, (_maxAlt - _minAlt) / ratioAltitude! - yOffset);
+      Offset p2 = Offset(graduationWidth, p1.dy);
+
+      if (k == TwoPass.drawLines) {
+        Paint paint = Paint()
+          ..color = Colors.black
+          ..strokeWidth = 2;
+        canvas.drawLine(p1, p2, paint);
+      } else {
+        drawAltitude1000Txt(
+            canvas: canvas, altitude: _minAlt, offset: Offset(7, p1.dy - 7));
+      }
+
+      //Max
+      p1 = const Offset(0, 2);
+      p2 = Offset(graduationWidth, p1.dy);
+      if (k == TwoPass.drawLines) {
+        Paint paint = Paint()
+          ..color = Colors.black
+          ..strokeWidth = 2;
+        canvas.drawLine(p1, p2, paint);
+      } else {
+        drawAltitude1000Txt(
+            canvas: canvas, altitude: _maxAlt, offset: Offset(7, p1.dy - 1));
+      }*/
+
+      for (double altitude = _minAlt; altitude <= _maxAlt; altitude++) {
+        if (altitude % 1000 == 0) {
+          final p1 = Offset(
+              graduationWidth / 2, (_maxAlt - altitude) / ratioAltitude!);
+          final p2 = Offset(graduationWidth, p1.dy);
+          if (k == TwoPass.drawLines) {
+            final paint = Paint()
+              ..color = Colors.black
+              ..strokeWidth = 2;
+            canvas.drawLine(p1, p2, paint);
+          } else {
+            drawAltitude1000Txt(
+                canvas: canvas,
+                altitude: altitude,
+                offset: Offset(7, p1.dy - 7));
+          }
+        } else if (altitude % 500 == 0) {
+          final p1 = Offset(
+              graduationWidth / 2, (_maxAlt - altitude) / ratioAltitude!);
+          final p2 = Offset(graduationWidth, p1.dy);
+          if (k == TwoPass.drawLines) {
+            final paint = Paint()
+              ..color = Colors.black
+              ..strokeWidth = 1;
+            canvas.drawLine(p1, p2, paint);
+          } else {
+            drawAltitude500Txt(
+                canvas: canvas,
+                altitude: altitude,
+                offset: Offset(9, p1.dy - 6));
+          }
+        } else if (altitude % 100 == 0) {
+          final p1 = Offset(
+              graduationWidth / 2, (_maxAlt - altitude) / ratioAltitude!);
+          final p2 = Offset(graduationWidth, p1.dy);
+          if (k == TwoPass.drawLines) {
+            final paint = Paint()
+              ..color = Colors.black
+              ..strokeWidth = 1;
+            canvas.drawLine(p1, p2, paint);
+          } else if (ratioAltitude! < 6.5) {
+            drawAltitude100Txt(
+                canvas: canvas,
+                altitude: altitude,
+                offset: Offset(9, p1.dy - 6));
+          }
+        } else if (altitude % 50 == 0 && ratioAltitude! < 6.5) {
+          final p1 = Offset(
+              graduationWidth / 1.5, (_maxAlt - altitude) / ratioAltitude!);
+          final p2 = Offset(graduationWidth, p1.dy);
+          if (k == TwoPass.drawLines) {
+            final paint = Paint()
+              ..color = Colors.grey
+              ..strokeWidth = 1;
+            canvas.drawLine(p1, p2, paint);
+          } /*else {
+            drawAltitude100Txt(
+                canvas: canvas,grey
+                altitude: altitude,
+                offset: Offset(9, p1.dy - 6));
+          } */
+        } else if (altitude % 10 == 0 && ratioAltitude! < 3) {
+          final p1 = Offset(
+              graduationWidth / 1.2, (_maxAlt - altitude) / ratioAltitude!);
+          final p2 = Offset(graduationWidth, p1.dy);
+          if (k == TwoPass.drawLines) {
+            final paint = Paint()
+              ..color = Colors.grey
+              ..strokeWidth = 1;
+            canvas.drawLine(p1, p2, paint);
+          } /*else {
+            drawAltitude100Txt(
+                canvas: canvas,grey
+                altitude: altitude,
+                offset: Offset(9, p1.dy - 6));
+          } */
+        }
+      }
     }
+    drawVerticalLegend(canvas: canvas, offset: Offset(-3, size.height - 80));
+  }
+
+  void drawHorizonLegend(
+      {required Canvas canvas, required Offset offset, bool longTxt = false}) {
+    TextSpan span = TextSpan(
+        style: GoogleFonts.robotoFlex(
+          color: Colors.blue.withOpacity(0.8),
+          fontWeight: FontWeight.normal,
+          //backgroundColor: backgroundColor,
+          fontSize: 14,
+        ),
+        text: "Heure UTC");
+    TextPainter tp =
+        TextPainter(text: span, textDirection: ui.TextDirection.ltr);
+    tp.layout();
+    tp.paint(canvas, offset);
+  }
+
+  void drawVerticalLegend(
+      {required Canvas canvas, required Offset offset, bool longTxt = false}) {
+    canvas.save();
+    //canvas.translate(0, 300);
+    canvas.translate(offset.dx, offset.dy);
+    canvas.rotate(-pi / 2);
+
+    TextSpan span = TextSpan(
+        style: GoogleFonts.robotoFlex(
+          color: Colors.blue.withOpacity(0.8),
+          fontWeight: FontWeight.normal,
+          //backgroundColor: backgroundColor,
+          fontSize: 14,
+        ),
+        text: "altitude en mètres");
+    TextPainter tp =
+        TextPainter(text: span, textDirection: ui.TextDirection.ltr);
+    tp.layout();
+    tp.paint(canvas, const Offset(0, 0));
+
+    canvas.restore();
+
+    /* canvas.save();
+    final pivot = fill.size.center(offset);
+    canvas.translate(pivot.dx, pivot.dy);
+    canvas.rotate(angle);
+    canvas.translate(-pivot.dx, -pivot.dy);
+    fill.paint(canvas, offset);
+    canvas.restore(); */
   }
 
   void drawHourTxt(
@@ -242,6 +462,78 @@ class DrawPainterGraduation extends CustomPainter {
           fontSize: 12,
         ),
         text: timeTxt);
+    TextPainter tp =
+        TextPainter(text: span, textDirection: ui.TextDirection.ltr);
+    tp.layout();
+    tp.paint(canvas, offset);
+  }
+
+  void drawAltitude1000Txt({
+    required Canvas canvas,
+    required Offset offset,
+    required double altitude,
+  }) {
+    String sText = "${altitude.round()} ";
+    if (sText.length == 3) {
+      offset = Offset(offset.dx + 3, offset.dy);
+    }
+
+    TextSpan span = TextSpan(
+        style: GoogleFonts.robotoFlex(
+          color: Colors.black,
+          fontWeight: FontWeight.bold,
+          backgroundColor: backgroundColor,
+          fontSize: 12,
+        ),
+        text: sText);
+    TextPainter tp =
+        TextPainter(text: span, textDirection: ui.TextDirection.ltr);
+    tp.layout();
+    tp.paint(canvas, offset);
+  }
+
+  void drawAltitude500Txt({
+    required Canvas canvas,
+    required Offset offset,
+    required double altitude,
+  }) {
+    String sText = "${altitude.round()}";
+    if (sText.length == 3) {
+      offset = Offset(offset.dx + 3, offset.dy);
+    }
+
+    TextSpan span = TextSpan(
+        style: GoogleFonts.robotoFlex(
+          color: Colors.black,
+          fontWeight: FontWeight.bold,
+          backgroundColor: backgroundColor,
+          fontSize: 10,
+        ),
+        text: sText);
+    TextPainter tp =
+        TextPainter(text: span, textDirection: ui.TextDirection.ltr);
+    tp.layout();
+    tp.paint(canvas, offset);
+  }
+
+  void drawAltitude100Txt({
+    required Canvas canvas,
+    required Offset offset,
+    required double altitude,
+  }) {
+    String sText = "${altitude.round()}";
+    if (sText.length == 3) {
+      offset = Offset(offset.dx + 3, offset.dy);
+    }
+
+    TextSpan span = TextSpan(
+        style: GoogleFonts.robotoFlex(
+          color: Colors.black,
+          fontWeight: FontWeight.normal,
+          backgroundColor: backgroundColor,
+          fontSize: 10,
+        ),
+        text: sText);
     TextPainter tp =
         TextPainter(text: span, textDirection: ui.TextDirection.ltr);
     tp.layout();
@@ -285,6 +577,18 @@ class DrawPainterGraduation extends CustomPainter {
         TextPainter(text: span, textDirection: ui.TextDirection.ltr);
     tp.layout();
     tp.paint(canvas, offset);
+  }
+
+  void drawRect(
+      {required Canvas canvas,
+      required Offset offsetFrom,
+      required Offset offsetTo,
+      required Color fillColor}) {
+    var rectangle = Rect.fromPoints(offsetFrom, offsetTo);
+    var paint = Paint()
+      ..color = fillColor
+      ..style = PaintingStyle.fill;
+    canvas.drawRect(rectangle, paint);
   }
 
   @override
